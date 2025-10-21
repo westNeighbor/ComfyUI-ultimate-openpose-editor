@@ -81,7 +81,7 @@ class OpenposeEditorDialog extends ComfyDialog {
         }
 
         const targetNode = ComfyApp.clipspace_return_node;
-        if (targetNode.inputs?.[0].link || targetNode.inputs?.[targetNode.inputs.length-1].widget){
+        if ((targetNode.inputs?.[0].link || targetNode.inputs?.[targetNode.inputs.length-1].widget) && targetNode.widgets.length > 15){
             const textAreaElement = targetNode.widgets[15].element;
             this.element.style.display = "flex";
             this.setCanvasJSONString(textAreaElement.value.replace(/'/g, '"'));
@@ -119,6 +119,7 @@ class OpenposeEditorDialog extends ComfyDialog {
             modalContent.removeChild(modalContent.firstChild);
         }
         modalContent.appendChild(this.iframeElement);
+        modalContent.appendChild(this.createButtons()[0]);
     }
 
     waitIframeReady() {
