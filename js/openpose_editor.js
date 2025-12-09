@@ -1,6 +1,13 @@
-import { app } from "../../scripts/app.js";
-import { ComfyDialog, $el } from "../../scripts/ui.js";
-import { ComfyApp } from "../../scripts/app.js";
+// Use new ComfyUI API directly to avoid deprecation issues
+const app = window.comfyAPI?.app?.app;
+const ComfyDialog = window.comfyAPI?.ui?.ComfyDialog;
+const $el = window.comfyAPI?.ui?.$el;
+const ComfyApp = window.comfyAPI?.app?.ComfyApp;
+
+// Fallback for older versions
+if (!app || !ComfyDialog || !$el || !ComfyApp) {
+    console.error('[OpenposeEditor] ComfyUI API not available, extension disabled');
+}
 
 
 function addMenuHandler(nodeType, cb) {
@@ -149,24 +156,27 @@ class OpenposeEditorDialog extends ComfyDialog {
     }
 }
 
-app.registerExtension({
-    name: "OpenposeEditor",
+// Only register if API is available
+if (app && ComfyDialog && $el && ComfyApp) {
+    app.registerExtension({
+        name: "OpenposeEditor",
 
-    async beforeRegisterNodeDef(nodeType, nodeData) {
-        if (nodeData.name === "OpenposeEditorNode") {
-            addMenuHandler(nodeType, function (_, options) {
-                options.unshift({
-                    content: "Open in Openpose Editor",
-                    callback: () => {
-                        // `this` is the node instance
-                        ComfyApp.copyToClipspace(this);
-                        ComfyApp.clipspace_return_node = this;
+        async beforeRegisterNodeDef(nodeType, nodeData) {
+            if (nodeData.name === "OpenposeEditorNode") {
+                addMenuHandler(nodeType, function (_, options) {
+                    options.unshift({
+                        content: "Open in Openpose Editor",
+                        callback: () => {
+                            // `this` is the node instance
+                            ComfyApp.copyToClipspace(this);
+                            ComfyApp.clipspace_return_node = this;
 
-                        const dlg = OpenposeEditorDialog.getInstance();
-                        dlg.show();
-                    },
+                            const dlg = OpenposeEditorDialog.getInstance();
+                            dlg.show();
+                        },
+                    });
                 });
-            });
+            }
         }
-    }
-});
+    });
+}
