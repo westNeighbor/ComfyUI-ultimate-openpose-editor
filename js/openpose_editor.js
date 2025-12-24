@@ -114,7 +114,7 @@ class OpenposeEditorDialog extends ComfyDialog {
     createLayout() {
         this.iframeElement = $el("iframe", {
             // Change to for local dev
-            src: "extensions/ComfyUI-ultimate-openpose-editor/ui/OpenposeEditor.html",
+            src: "extensions/ComfyUI-ultimate-openpose-editor/ui/OpenposeEditor.html?theme=dark",
             style: {
                 width: "100%",
                 height: "100%",
