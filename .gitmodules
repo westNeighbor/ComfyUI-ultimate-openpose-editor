@@ -1,0 +1,3 @@
+[submodule "openpose-editor"]
+	path = openpose-editor
+	url = git@github.com:aoi-umi/openpose-editor.git
