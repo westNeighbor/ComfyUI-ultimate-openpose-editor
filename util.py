@@ -103,58 +103,29 @@ def pose_normalized(pose_json):
         figures = image['people']
         H = image['canvas_height']
         W = image['canvas_width']
-        normalized = 0.0
         for figure in figures:
-            if 'pose_keypoints_2d' in figure:
-                body = figure['pose_keypoints_2d']
-                if body:
-                    normalized = max(body)
-                    if normalized > 2.0:
-                        break
-            if 'face_keypoints_2d' in figure:
-                face = figure['face_keypoints_2d']
-                if face:
-                    normalized = max(face)
-                    if normalized > 2.0:
-                        break
-            if 'hand_left_keypoints_2d' in figure:
-                lhand = figure['hand_left_keypoints_2d']
-                if lhand:
-                    normalized = max(lhand)
-                    if normalized > 2.0:
-                        break
-            if 'hand_right_keypoints_2d' in figure:
-                rhand = figure['hand_right_keypoints_2d']
-                if rhand:
-                    normalized = max(rhand)
-                    if normalized > 2.0:
-                        break
-        if normalized > 2.0:
-            for figure in figures:
-                if 'pose_keypoints_2d' in figure:
-                    body = figure['pose_keypoints_2d']
-                    if body is not None:
-                        for i in range(0, len(body), 3):
-                            body[i] = body[i] / float(W)
-                            body[i+1] = body[i+1] / float(H)
-                if 'face_keypoints_2d' in figure:
-                    face = figure['face_keypoints_2d']
-                    if face is not None:
-                        for i in range(0, len(face), 3):
-                            face[i] = face[i] / float(W)
-                            face[i+1] = face[i+1] / float(H)
-                if 'hand_left_keypoints_2d' in figure:
-                    lhand = figure['hand_left_keypoints_2d']
-                    if lhand is not None:
-                        for i in range(0, len(lhand), 3):
-                            lhand[i] = lhand[i] / float(W)
-                            lhand[i+1] = lhand[i+1] / float(H)
-                if 'hand_right_keypoints_2d' in figure:
-                    rhand = figure['hand_right_keypoints_2d']
-                    if rhand is not None:
-                        for i in range(0, len(rhand), 3):
-                            rhand[i] = rhand[i] / float(W)
-                            rhand[i+1] = rhand[i+1] / float(H)
+            for key, dim_x, dim_y in [
+                ('pose_keypoints_2d', W, H),
+                ('face_keypoints_2d', W, H),
+                ('hand_left_keypoints_2d', W, H),
+                ('hand_right_keypoints_2d', W, H),
+            ]:
+                kpts = figure.get(key)
+                if not kpts:
+                    continue
+                if max(kpts) > 2.0:
+                    for i in range(0, len(kpts), 3):
+                        kpts[i] = kpts[i] / float(dim_x)
+                        kpts[i+1] = kpts[i+1] / float(dim_y)
+                # Clamp x,y to [0,1] so the editor's normalization detection
+                # (bn.every(v => Math.abs(v) <= 1)) always passes. Without this,
+                # keypoints outside the canvas boundary (e.g. y > canvas_height)
+                # produce normalized values > 1.0 which cause the editor to
+                # misidentify the array as pixel-space, placing all body points
+                # at sub-pixel coordinates in the upper-left corner.
+                for i in range(0, len(kpts), 3):
+                    kpts[i] = max(0.0, min(1.0, kpts[i]))
+                    kpts[i+1] = max(0.0, min(1.0, kpts[i+1]))
     return json.dumps(images)
 
 def scale(point, scale_factor, pivot):
