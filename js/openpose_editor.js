@@ -61,8 +61,10 @@ class OpenposeEditorDialog extends ComfyDialog {
                 const textAreaElement = poseWidget.element;
                 const poseString = JSON.stringify(event.data.poses);
                 textAreaElement.value = poseString;
-                // Fix: sincronizar el valor interno del widget y notificar al frontend;
-                // si no, ComfyUI ejecuta con POSE_JSON vacio (imagen negra)
+                // Fix: also sync the widget's internal value and notify the frontend.
+                // Setting only the DOM textarea value does not update widget.value on
+                // newer ComfyUI frontends, so the prompt executes with an empty
+                // POSE_JSON and the node outputs a blank (black) image.
                 poseWidget.value = poseString;
                 textAreaElement.dispatchEvent(new Event("input", { bubbles: true }));
                 if (poseWidget.callback) { poseWidget.callback(poseString); }
@@ -96,12 +98,11 @@ class OpenposeEditorDialog extends ComfyDialog {
         }
 
         const targetNode = ComfyApp.clipspace_return_node;
-        //if (targetNode.inputs?.[0].link || targetNode.inputs?.[targetNode.inputs.length-1].widget){
-            //const textAreaElement = targetNode.widgets[15].element;
-		//	const textAreaElement = targetNode.widgets[14].element;
-        //    this.element.style.display = "flex";
-        //    this.setCanvasJSONString(textAreaElement.value.replace(/'/g, '"'));
-        //} else {
+        if (targetNode.inputs?.[0].link || targetNode.inputs?.[targetNode.inputs.length-1].widget){
+            const textAreaElement = targetNode.widgets[15].element;
+            this.element.style.display = "flex";
+            this.setCanvasJSONString(textAreaElement.value.replace(/'/g, '"'));
+        } else {
             const textAreaElement = targetNode.widgets[14].element;
             this.element.style.display = "flex";
             if (textAreaElement.value === "") {
@@ -117,7 +118,7 @@ class OpenposeEditorDialog extends ComfyDialog {
             } else {
                 this.setCanvasJSONString(textAreaElement.value.replace(/'/g, '"'));
             }
-        //}
+        }
     }
 
     createLayout() {
