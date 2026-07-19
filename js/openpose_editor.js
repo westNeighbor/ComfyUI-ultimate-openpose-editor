@@ -57,8 +57,16 @@ class OpenposeEditorDialog extends ComfyDialog {
             const message = event.data;
             if (message.modalId === 0) {
                 const targetNode = ComfyApp.clipspace_return_node;
-                const textAreaElement = targetNode.widgets[14].element;
-                textAreaElement.value = JSON.stringify(event.data.poses);
+                const poseWidget = targetNode.widgets[14];
+                const textAreaElement = poseWidget.element;
+                const poseString = JSON.stringify(event.data.poses);
+                textAreaElement.value = poseString;
+                // Fix: sincronizar el valor interno del widget y notificar al frontend;
+                // si no, ComfyUI ejecuta con POSE_JSON vacio (imagen negra)
+                poseWidget.value = poseString;
+                textAreaElement.dispatchEvent(new Event("input", { bubbles: true }));
+                if (poseWidget.callback) { poseWidget.callback(poseString); }
+                targetNode.setDirtyCanvas(true, true);
 		ComfyApp.onClipspaceEditorClosed();
                 this.close();
             }
@@ -88,11 +96,12 @@ class OpenposeEditorDialog extends ComfyDialog {
         }
 
         const targetNode = ComfyApp.clipspace_return_node;
-        if (targetNode.inputs?.[0].link || targetNode.inputs?.[targetNode.inputs.length-1].widget){
-            const textAreaElement = targetNode.widgets[15].element;
-            this.element.style.display = "flex";
-            this.setCanvasJSONString(textAreaElement.value.replace(/'/g, '"'));
-        } else {
+        //if (targetNode.inputs?.[0].link || targetNode.inputs?.[targetNode.inputs.length-1].widget){
+            //const textAreaElement = targetNode.widgets[15].element;
+		//	const textAreaElement = targetNode.widgets[14].element;
+        //    this.element.style.display = "flex";
+        //    this.setCanvasJSONString(textAreaElement.value.replace(/'/g, '"'));
+        //} else {
             const textAreaElement = targetNode.widgets[14].element;
             this.element.style.display = "flex";
             if (textAreaElement.value === "") {
@@ -108,7 +117,7 @@ class OpenposeEditorDialog extends ComfyDialog {
             } else {
                 this.setCanvasJSONString(textAreaElement.value.replace(/'/g, '"'));
             }
-        }
+        //}
     }
 
     createLayout() {
