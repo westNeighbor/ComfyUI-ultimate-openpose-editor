@@ -57,8 +57,18 @@ class OpenposeEditorDialog extends ComfyDialog {
             const message = event.data;
             if (message.modalId === 0) {
                 const targetNode = ComfyApp.clipspace_return_node;
-                const textAreaElement = targetNode.widgets[14].element;
-                textAreaElement.value = JSON.stringify(event.data.poses);
+                const poseWidget = targetNode.widgets[14];
+                const textAreaElement = poseWidget.element;
+                const poseString = JSON.stringify(event.data.poses);
+                textAreaElement.value = poseString;
+                // Fix: also sync the widget's internal value and notify the frontend.
+                // Setting only the DOM textarea value does not update widget.value on
+                // newer ComfyUI frontends, so the prompt executes with an empty
+                // POSE_JSON and the node outputs a blank (black) image.
+                poseWidget.value = poseString;
+                textAreaElement.dispatchEvent(new Event("input", { bubbles: true }));
+                if (poseWidget.callback) { poseWidget.callback(poseString); }
+                targetNode.setDirtyCanvas(true, true);
 		ComfyApp.onClipspaceEditorClosed();
                 this.close();
             }
